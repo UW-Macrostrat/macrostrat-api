@@ -1,0 +1,6 @@
+mysql_host="localhost"
+mysql_user="jczaplewski"
+mysql_passwd="pbdb"
+mysql_db="playground"
+#mysql_unix_socket = "/var/tmp/mariadb.sock"
+mysql_unix_socket="/tmp/mysql.sock"
