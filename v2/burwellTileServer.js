@@ -29,7 +29,7 @@ module.exports = tilestrata.middleware({
 
           .route('tile.pbf')
               .use(vtile({
-                  pathname: `${credentials.tiles.configPath}/burwell_vector_large_${layer}.xml`,
+                  xml: `${credentials.tiles.configPath}/burwell_vector_large.xml`,
                   tileSize: 256,
                   metatile: 1,
                   bufferSize: 128
