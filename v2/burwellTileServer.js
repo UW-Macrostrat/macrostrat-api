@@ -2,7 +2,7 @@ var tilestrata = require("tilestrata");
 var mapnik = require("tilestrata-mapnik");
 var headers = require("tilestrata-headers");
 var etag = require("tilestrata-etag");
-//var vtile = require("tilestrata-vtile");
+var vtile = require("tilestrata-vtile");
 var portscanner = require("portscanner");
 var credentials = require("./credentials");
 
@@ -16,25 +16,25 @@ module.exports = tilestrata.middleware({
     credentials.tiles.activeLayers.forEach(function(layer) {
       strata.layer(layer)
           .route("tile.png")
-          .use(mapnik({
-              pathname: credentials.tiles.configPath + `/burwell_large_${layer}.xml`,
-              tileSize: 512,
-              scale: 2
-          }))
-          .use(headers({
-            "Cache-Control": "max-age=604800",
-            "X-Powered-By": "TileStrata"
-          }))
-          .use(etag())
-          //
-          // .route('tile.pbf')
-          //     .use(vtile({
-          //         pathname: credentials.tiles.configPath + `/burwell_vector_large_${layer}.xml`,
-          //         tileSize: 256,
-          //         metatile: 1,
-          //         bufferSize: 128
-          //     }))
-          //     .use(etag())
+            .use(mapnik({
+                pathname: `${credentials.tiles.configPath}/burwell_large_${layer}.xml`,
+                tileSize: 512,
+                scale: 2
+            }))
+            .use(headers({
+              "Cache-Control": "max-age=604800",
+              "X-Powered-By": "TileStrata"
+            }))
+            .use(etag())
+
+          .route('tile.pbf')
+              .use(vtile({
+                  pathname: `${credentials.tiles.configPath}/burwell_vector_large_${layer}.xml`,
+                  tileSize: 256,
+                  metatile: 1,
+                  bufferSize: 128
+              }))
+              .use(etag())
     });
 
     // Check if Redis is running
@@ -59,6 +59,15 @@ module.exports = tilestrata.middleware({
                     diskMaxAge: 86400000, // 24hrs
                     dir: credentials.tiles.stashPath + '/' + layer,
                     defaultTile: __dirname + "/default@2x.png"
+                  }))
+              .route("tile.pbf")
+                  .use(cache({
+                    size: "1GB", // only for application cache
+                    ttl: 3000,
+                    lruMaxAge: 21600000,  // 6hrs
+                    diskMaxAge: 86400000, // 24hrs
+                    dir: credentials.tiles.stashPath,
+                    defaultTile: __dirname + "/default.pbf"
                   }));
         });
       });
