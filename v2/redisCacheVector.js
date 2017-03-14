@@ -24,7 +24,10 @@ module.exports = function(options) {
         if (error) {
           return cb(error)
         }
-        return cb(null, buffer, {'Content-Type': 'application/x-protobuf'})
+        return cb(null, buffer, {
+          'Content-Type': 'application/x-protobuf',
+          'Content-Encoding': 'gzip'
+        })
       });
     }
 
@@ -44,6 +47,7 @@ module.exports = function(options) {
             if (data) {
               return callback(null, data, {
                 'Content-Type': 'application/x-protobuf',
+                'Content-Encoding': 'gzip',
                 'X-TileStrata-RedisHit': '1'
               });
             }
