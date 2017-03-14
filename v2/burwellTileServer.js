@@ -5,6 +5,7 @@ var etag = require("tilestrata-etag");
 var vtile = require("tilestrata-vtile");
 var portscanner = require("portscanner");
 var credentials = require("./credentials");
+var redisCacheVector = require("./redisCacheVector")
 
 module.exports = tilestrata.middleware({
   prefix: "/maps/burwell",
@@ -61,10 +62,8 @@ module.exports = tilestrata.middleware({
                     defaultTile: __dirname + "/default@2x.png"
                   }))
               .route("tile.pbf")
-                  .use(cache({
-                    size: "1GB", // only for application cache
+                  .use(redisCacheVector({
                     ttl: 3000,
-                    lruMaxAge: 21600000,  // 6hrs
                     diskMaxAge: 86400000, // 24hrs
                     dir: credentials.tiles.stashPath,
                     defaultTile: __dirname + "/default.pbf"
