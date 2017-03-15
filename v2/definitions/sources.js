@@ -1,6 +1,5 @@
 var api = require("../api"),
     larkin = require("../larkin"),
-    multiline = require("multiline"),
     dbgeo = require("dbgeo"),
     gp = require("geojson-precision");
 
@@ -9,7 +8,7 @@ module.exports = function(req, res, next, cb) {
     return larkin.info(req, res, next);
   }
 
-  var sql = multiline(function() {/*
+  var sql = `
     SELECT
       source_id,
       name,
@@ -22,10 +21,10 @@ module.exports = function(req, res, next, cb) {
       COALESCE(scale, '') scale,
       features,
       area
-  */});
+  `
 
   if (api.acceptedFormats.geo[req.query.format]) {
-    sql += ", ST_AsGeoJSON(rgeom) AS geometry";
+    sql += ", ST_AsGeoJSON(ST_Envelope(rgeom)) AS geometry";
   }
 
   sql += " FROM maps.sources ";
