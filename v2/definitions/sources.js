@@ -1,7 +1,6 @@
-var api = require("../api"),
-    larkin = require("../larkin"),
-    dbgeo = require("dbgeo"),
-    gp = require("geojson-precision");
+var api = require("../api")
+var larkin = require("../larkin")
+var dbgeo = require("dbgeo")
 
 module.exports = function(req, res, next, cb) {
   if (Object.keys(req.query).length < 1) {
@@ -76,15 +75,12 @@ module.exports = function(req, res, next, cb) {
     } else {
       if (req.query.format && api.acceptedFormats.geo[req.query.format]) {
         dbgeo.parse(result.rows, {
-          "outputFormat": larkin.getOutputFormat(req.query.format)
+          "outputFormat": larkin.getOutputFormat(req.query.format),
+          "precision": 5
         }, function(error, geojson) {
           if (error) {
             larkin.error(req, res, next, error);
           } else {
-            if (larkin.getOutputFormat(req.query.format) === "geojson") {
-              result = gp(geojson, 5);
-            }
-
             if (cb) {
               cb(null, geojson);
             } else {
