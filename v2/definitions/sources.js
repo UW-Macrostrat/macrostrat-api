@@ -21,14 +21,9 @@ module.exports = function(req, res, next, cb) {
       COALESCE(scale, '') scale,
       features,
       area
+      ${api.acceptedFormats.geo[req.query.format] ? ', ST_Envelope(rgeom) AS geom' : ''}
+      FROM maps.sources
   `
-
-  if (api.acceptedFormats.geo[req.query.format]) {
-    sql += ", ST_AsGeoJSON(ST_Envelope(rgeom)) AS geometry";
-  }
-
-  sql += " FROM maps.sources ";
-
 
   var params = [];
   var where = [];
@@ -80,8 +75,7 @@ module.exports = function(req, res, next, cb) {
       }
     } else {
       if (req.query.format && api.acceptedFormats.geo[req.query.format]) {
-        dbgeo.parse({
-          "data": result.rows,
+        dbgeo.parse(result.rows, {
           "outputFormat": larkin.getOutputFormat(req.query.format)
         }, function(error, geojson) {
           if (error) {
