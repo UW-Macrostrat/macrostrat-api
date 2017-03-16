@@ -55,11 +55,7 @@ module.exports = function(req, res, next, cb) {
 
   sql += (where.length) ? (" WHERE " + where.join(" AND ")) : "";
 
-  if (api.acceptedFormats.geo[req.query.format]) {
-    sql += " ORDER BY CASE scale when 'tiny' THEN 1 WHEN 'small' THEN 2 WHEN 'medium' THEN 3 WHEN 'large' THEN 4 ELSE 5 END";
-  } else {
-    sql += " ORDER BY source_id";
-  }
+  sql += " ORDER BY source_id DESC";
 
   if ("sample" in req.query) {
     sql += " LIMIT 5";
