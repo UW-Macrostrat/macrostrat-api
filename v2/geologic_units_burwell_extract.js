@@ -55,7 +55,7 @@ module.exports = (req, res, next) => {
     //   })
     // },
     geology_shapefile: (callback) => {
-      exec(`pgsql2shp -u ${credentials.pg.user} -h ${credentials.pg.host} -p ${credentials.pg.port} -f ${__dirname}/${datasetName}/geology.shp burwell "SELECT map_id, ST_Intersection(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326)) AS geom FROM carto.large WHERE ST_Intersects(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326))"`, (error) => {
+      exec(`pgsql2shp -u ${credentials.pg.user} -h ${credentials.pg.host} -p ${credentials.pg.port} -f ${__dirname}/${datasetName}/units.shp burwell "SELECT map_id, ST_Intersection(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326)) AS geom FROM carto.large WHERE ST_Intersects(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326))"`, (error) => {
         if (error) {
           console.log(error)
         }
@@ -72,7 +72,7 @@ module.exports = (req, res, next) => {
           console.log(error)
         }
 
-        fs.writeFile(`${__dirname}/${datasetName}/attributes.csv`, json2csv({
+        fs.writeFile(`${__dirname}/${datasetName}/unit_attributes.csv`, json2csv({
           data: result.rows
         }), (error, result) => {
           if (error) {
@@ -83,6 +83,49 @@ module.exports = (req, res, next) => {
 
       })
     },
+    line_shapefile: (callback) => {
+      exec(`pgsql2shp -u ${credentials.pg.user} -h ${credentials.pg.host} -p ${credentials.pg.port} -f ${__dirname}/${datasetName}/lines.shp burwell "SELECT line_id, ST_Intersection(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326)) AS geom FROM carto.lines_large WHERE ST_Intersects(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint(${req.query.min_lng}, ${req.query.min_lat}), ST_MakePoint(${req.query.max_lng}, ${req.query.max_lat})), 4326))"`, (error) => {
+        if (error) {
+          console.log(error)
+        }
+        callback(null)
+      })
+    },
+    line_attributes: (callback) => {
+      larkin.queryPg('burwell', `
+        SELECT line_id, scale, source_id, name, type, direction, descrip
+        FROM carto.lines_large
+        WHERE ST_Intersects(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint($1, $2), ST_MakePoint($3, $4)), 4326))
+      `, [req.query.min_lng, req.query.min_lat, req.query.max_lng, req.query.max_lat], (error, result) => {
+        if (error) {
+          console.log(error)
+        }
+
+        fs.writeFile(`${__dirname}/${datasetName}/line_attributes.csv`, json2csv({
+          data: result.rows
+        }), (error, result) => {
+          if (error) {
+            console.log(error)
+          }
+          callback(null)
+        })
+
+      })
+    },
+    metadata: (callback) => {
+      let text = `
+        Date: ${new Date().toISOString().slice(0, 10)}
+        Source: https://macrostrat.org/api/v2/geologic_units/burwell/extract?min_lng=${req.query.min_lng}&min_lat=${req.query.min_lat}&max_lng=${req.query.max_lng}&max_lat=${req.query.max_lat}
+        License: CC-BY-4.0 International
+        Sources can be found at https://macrostrat.org/api/v2/defs/sources?all
+      `
+      fs.writeFile(`${__dirname}/${datasetName}/metadata.txt`, text, (error) => {
+        if (error) {
+          console.log(error)
+        }
+        callback(null)
+      })
+    }
   }, (error, result) => {
     if (error) {
       return larkin.error(req, res, next, 'Something went wrong', 500)
