@@ -34,7 +34,7 @@ module.exports = (req, res, next) => {
         if (error) return callback(error)
 
         let result = Buffer.concat(data.rows.map(d => { return new Buffer(d.rast.buffer) }))
-        fs.writeFile(`${__dirname}/${datasetName}/srtm1.tiff`, result, 'binary', function(error) {
+        fs.writeFile(`${__dirname}/${datasetName}/srtm1.tiff`, result, 'binary', (error) => {
           if (error) {
             console.log(error)
           }
@@ -55,14 +55,14 @@ module.exports = (req, res, next) => {
         SELECT map_id, source_id, scale, name, strat_name, age, lith, descrip, comments, t_int_id, t_int, best_age_top, b_int_id, b_int, best_age_bottom, color
         FROM carto.large
         WHERE ST_Intersects(geom, ST_SetSRID(ST_MakeBox2D(ST_MakePoint($1, $2), ST_MakePoint($3, $4)), 4326))
-      `, [req.query.min_lng, req.query.min_lat, req.query.max_lng, req.query.max_lat], function(error, result) {
+      `, [req.query.min_lng, req.query.min_lat, req.query.max_lng, req.query.max_lat], (error, result) => {
         if (error) {
           console.log(error)
         }
-        var csv = json2csv({
+        let csv = json2csv({
           data: result.rows
         })
-        fs.writeFile(`${__dirname}/${datasetName}/attributes.csv`, csv, function(error, result) {
+        fs.writeFile(`${__dirname}/${datasetName}/attributes.csv`, csv, (error, result) => {
           if (error) {
             console.log(error)
           }
