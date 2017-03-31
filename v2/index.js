@@ -59,6 +59,9 @@ api.route("/geologic_units/burwell/nearby")
 api.route("/geologic_units/burwell/points")
   .get(require("./geologic_units_burwell_points"));
 
+api.route("/geologic_units/burwell/extract")
+  .get(require("./geologic_units_burwell_extract"));
+
 api.route("/elevation")
   .get(function(req, res, next) {
     require("./elevation")(req, res, next);

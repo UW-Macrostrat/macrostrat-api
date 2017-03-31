@@ -1255,6 +1255,29 @@
     }
   },
 
+  "/geologic_units/burwell/extract": {
+    "description": "Extract a chunk of carto.large. Returns a zip archive.",
+    "visible": false,
+    "parent": "geologic_units",
+    "options": {
+      "parameters": {
+        "min_lng": "*Required* the longitude of the southwest corner of the desired bbox",
+        "min_lat": "*Required* the latitude of the southwest corner of the desired bbox",
+        "max_lng": "*Required* the longitude of the northeast corner of the desired bbox",
+        "max_lat": "*Required* the latitude of the northeast corner of the desired bbox"
+      },
+      "output_formats": [
+
+      ],
+      "examples": [
+        "api/v2/geologic_units/burwell/extract?min_lng=-89.5&min_lat=43&max_lng=-89.3&max_lat=43.1"
+      ],
+      "fields": [
+
+      ]
+    }
+  },
+
   "/geologic_units/burwell/nearby": {
     "description": "Stratigraphic names, lithologies, and time intervals near a coordinate in Burwell",
     "visible": false,
