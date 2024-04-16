@@ -2,7 +2,7 @@
   "name": "macrostrat-api",
   "version": "3.0.0-dev",
   "description": "The API for SCIENCE",
-  "main": "server.js",
+  "main": "server.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/UW-Macrostrat/macrostrat-api.git"
@@ -10,7 +10,7 @@
   "scripts": {
     "start": "nodemon --watch v2 --exec ts-node --transpileOnly server.ts",
     "serve": "ts-node --transpileOnly server.ts",
-    "test": "mocha ./v2",
+    "test": "mocha --require ts-node/register/transpile-only './v2test/test/test.js'",
     "defs": "ts-node --transpileOnly ./v2/utilities/validateDefs.ts",
     "build-defs": "ts-node --transpileOnly ./v2/utilities/getOutputFields.ts",
     "build-changes": "grip ./v2/CHANGELOG.md --export ./v2/changes.html"
@@ -62,14 +62,15 @@
     "turf-buffer": "^1.0.4",
     "turf-point": "^0.1.6",
     "turf-voronoi": "git+https://github.com/Turfjs/turf-voronoi.git",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.4",
     "underscore": "^1.8.3",
     "universal-analytics": "^0.4.6",
     "wellknown": "^0.3.0",
     "yesql": "^7.0.0"
   },
   "devDependencies": {
-    "mocha": "^1.21.4",
+    "@types/mocha": "^10.0.6",
+    "mocha": "^10.4.0",
     "node-uuid": "^1.4.3",
     "nodemon": "^3.0.3",
     "prettier": "^3.2.3",
