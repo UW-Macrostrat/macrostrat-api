@@ -54,6 +54,9 @@ parameter to programmatically refresh the column cache, such as in situations in
 which the underlying data has been changed (editing, adding, etc).
 
 ## Running
+NOTICE: To start the API, run "yarn run start". To run the unit tests, run `tsc`, which will create a test directory called "v2test", this can be changed in tsconfig.json. Then run `yarn run test` to run the tests. All information below this notice in the "Running" section is potentially deprecated and needs to be reviewed.
+
+===============================================================================
 
 To start the API simply run `node server.js` which will start a process on
 port 5050. Note that the default port was changed from 5000 to 5050 to avoid a
