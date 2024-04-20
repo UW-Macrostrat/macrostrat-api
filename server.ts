@@ -65,5 +65,5 @@ if (!module.parent) {
   app.start();
 }
 
-//module.exports = app;
-export { app };
+module.exports = app;
+//export { app };
