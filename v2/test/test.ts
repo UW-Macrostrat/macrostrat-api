@@ -1,7 +1,8 @@
 var should = require("should");
 var settings = require("./settings");
-var app = require("../../server");
-
+//import { toExport as settings } from "./settings";
+var app = require("../../server.ts");
+//import { app } from "../../server";
 app.port = settings.port;
 
 app.start();

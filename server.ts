@@ -1,8 +1,8 @@
 var express = require("express"),
   bodyParser = require("body-parser"),
   //v1 = require("./v1"),
-  v2 = require("./v2"),
-  defs = require("./v2/defs"),
+  v2 = require("./v2test"),
+  defs = require("./v2test/defs"),
   app = express();
 
 var ua = require("universal-analytics");
@@ -66,3 +66,4 @@ if (!module.parent) {
 }
 
 module.exports = app;
+//export { app };
