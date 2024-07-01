@@ -11,12 +11,11 @@ npm-debug.log
 node_modules
 v1/node_modules/*
 v1/npm-debug.log
-.github
 v1/utilities/scripts/credentials.py
 .idea
 venv
 
-credentials.ts
+!credentials.ts
 !v1/credentials.ts
 v2/credentials.ts
 v2/utilities/scripts/credentials.py
@@ -33,5 +32,4 @@ Icon
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
-.yarn
 .yarn/install-state.gz
