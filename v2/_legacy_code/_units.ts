@@ -9,8 +9,6 @@ module.exports = function (req, res, next, cb) {
   if (Object.keys(req.query).length < 1) {
     return larkin.info(req, res, next);
   }
-  let params = []
-
 
   // First determine age range component of query, if any.
   // NB: ORDER MATTERS here. Do NOT add else if statements before req.query.interval_name, req.query.age or req.query.age_top else statements or  those age parameters will be ommitted
@@ -18,38 +16,34 @@ module.exports = function (req, res, next, cb) {
     [
       function (callback) {
         if (req.query.interval_name) {
-          params.push(req.query.interval_name)
-          let sql = `SELECT age_bottom, age_top, interval_name FROM macrostrat_temp.intervals WHERE interval_name = $1 LIMIT 1`
-          larkin.queryPgMaria("macrostrat_two",
-            sql,
-            params,
+          larkin.query(
+            "SELECT age_bottom, age_top, interval_name FROM intervals WHERE interval_name = ? LIMIT 1",
+            [req.query.interval_name],
             function (error, result) {
               if (error) {
                 callback(error);
               } else {
-                if (result.rowCount == 0) {
+                if (result.length === 0) {
                   return larkin.error(req, res, next, "No results found");
                 } else {
                   callback(null, {
-                    interval_name: result.rows[0].interval_name,
-                    age_bottom: result.rows[0].age_bottom,
-                    age_top: result.rows[0].age_top,
+                    interval_name: result[0].interval_name,
+                    age_bottom: result[0].age_bottom,
+                    age_top: result[0].age_top,
                   });
                 }
               }
             },
           );
         } else if (req.query.int_id) {
-          let sql = "SELECT age_bottom, age_top, interval_name FROM macrostrat_temp.intervals WHERE id = $1 LIMIT 1"
-          params.push(req.query.int_id)
-          larkin.queryPgMaria("macrostrat_two",
-            sql,
-            params,
+          larkin.query(
+            "SELECT age_bottom, age_top, interval_name FROM intervals WHERE id = ? LIMIT 1",
+            [req.query.int_id],
             function (error, result) {
               if (error) {
                 callback(error);
               } else {
-                if (result.rowCount == 0) {
+                if (result.length === 0) {
                   callback(null, {
                     interval_name: "none",
                     age_bottom: 0,
@@ -57,9 +51,9 @@ module.exports = function (req, res, next, cb) {
                   });
                 } else {
                   callback(null, {
-                    interval_name: result.rows[0].interval_name,
-                    age_bottom: result.rows[0].age_bottom,
-                    age_top: result.rows[0].age_top,
+                    interval_name: result[0].interval_name,
+                    age_bottom: result[0].age_bottom,
+                    age_top: result[0].age_top,
                   });
                 }
               }
