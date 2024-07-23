@@ -44,7 +44,6 @@ const { Client, Pool } = require("pg");
       /** Special case for elevation database (temporary) */
       connectionString = credentials.elevationDatabase;
     }
-
     const pool = new Pool({
       connectionString,
       ...otherConnectionDetails,
@@ -67,6 +66,57 @@ const { Client, Pool } = require("pg");
       }
     });
   };
+
+  //added new method to query from Maria data in the new PG database after migration
+  larkin.queryPgMaria = function (db, sql, params, callback) {
+    //add console.logs for debug mode in the future
+    console.log(sql)
+    console.log(params)
+    const nameMapping = credentials.postgresDatabases ?? {};
+    const dbName = nameMapping[db] ?? db;
+
+    let { connectionString, ...otherConnectionDetails } = credentials.pgMaria;
+
+    if (dbName == "geomacro") {
+      console.warn(
+        "In Macrostrat v2, 'geomacro' is merged with 'burwell' into the 'macrostrat' database.",
+      );
+    }
+
+    if (dbName == "elevation") {
+      /** Special case for elevation database (temporary) */
+      connectionString = credentials.elevationDatabase;
+    }
+
+    const pool = new Pool({
+      connectionString,
+      ...otherConnectionDetails,
+    });
+
+    pool.connect(function (err, client, done) {
+      if (err) {
+        larkin.log("error", "error connecting - " + err);
+        callback(err);
+      } else {
+        //named uses yesql to modify the params dict and sql named parameters into an array before querying PG.
+        //client.query can only accept numerical indices in sql syntax and an array for parameter values.
+        const preparedQuery = named(sql)(params);
+        var query = client.query(preparedQuery.text, preparedQuery.values, function (err, result) {
+          done();
+          if (err) {
+            larkin.log("error", err);
+            callback(err);
+          } else {
+            callback(null, result);
+          }
+        });
+      }
+    });
+  };
+
+
+
+
 
   larkin.toUnnamed = function (sql, params) {
     var placeholders = sql.match(
@@ -112,7 +162,6 @@ const { Client, Pool } = require("pg");
             }
           }.bind(this),
         );
-        //console.log(query.sql)
       }.bind(this),
     );
   };
@@ -598,8 +647,12 @@ const { Client, Pool } = require("pg");
               });
 
               res.on("end", function () {
-                var result = JSON.parse(body).success.data;
-
+              var parsedBody = JSON.parse(body);
+              if (parsedBody && parsedBody.success && parsedBody.success.data) {
+                var result = parsedBody.success.data;
+              } else {
+                console.error('Invalid response body:', body);
+                }
                 var cols = _.groupBy(result, function (d) {
                   return d.col_id;
                 });
@@ -693,7 +746,7 @@ const { Client, Pool } = require("pg");
           col_groups.id AS col_group_id,
           col AS group_col_id,
           round(cols.col_area, 1) AS col_area,
-          project_id,
+          cols.project_id,
           string_agg(col_refs.ref_id::varchar, '|') AS refs,
           ST_AsGeoJSON(col_areas.col_area) geojson
         FROM macrostrat.cols
@@ -729,7 +782,7 @@ const { Client, Pool } = require("pg");
           col_groups.id AS col_group_id,
           col AS group_col_id,
           round(cols.col_area, 1) AS col_area,
-          project_id,
+          cols.project_id,
           string_agg(col_refs.ref_id::varchar, '|') AS refs
         FROM macrostrat.cols
         LEFT JOIN macrostrat.col_areas on col_areas.col_id = cols.id
