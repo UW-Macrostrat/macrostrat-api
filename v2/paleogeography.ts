@@ -2,7 +2,7 @@ var api = require("./api"),
   async = require("async"),
   dbgeo = require("dbgeo"),
   larkin = require("./larkin");
-
+//TODO test this endpoint. cannot test error: relation "earthbyte2013_raw.reconstructed_2" does not exist
 module.exports = function (req, res, next) {
   if (!req.query.age && !req.query.interval_name && !("sample" in req.query)) {
     larkin.info(req, res, next);
@@ -10,12 +10,15 @@ module.exports = function (req, res, next) {
     async.waterfall(
       [
         function (callback) {
+          let params = {}
           if (req.query.age) {
             callback(null, req.query.age);
           } else if (req.query.interval_name) {
-            larkin.query(
-              "SELECT (age_bottom + age_top)/2 AS mid FROM intervals WHERE interval_name = ?",
-              [req.query.interval_name],
+              let sql = `SELECT (age_bottom + age_top)/2 AS mid FROM macrostrat.intervals WHERE interval_name = :interval_name`
+              params['interval_name'] = req.query.interval_name
+            larkin.queryPg("burwell",
+              sql,
+               params,
               function (error, result) {
                 if (error) {
                   callback(error);
@@ -43,7 +46,7 @@ module.exports = function (req, res, next) {
               limit,
             [],
             function (error, result) {
-              callback(null, result.rows);
+              callback(null, result);
             },
           );
         },

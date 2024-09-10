@@ -64,17 +64,20 @@ module.exports = function (req, res, next) {
       query =
         "sample" in req.query ? "ma%" : req.query.query.toLowerCase() + "%";
 
-    larkin.query(
-      "SELECT * FROM autocomplete WHERE name LIKE :query AND type IN (:types) LIMIT :limit",
+    larkin.queryPg("burwell",
+      "SELECT id::integer, name, type, category FROM macrostrat.autocomplete WHERE name ILIKE :query AND type = ANY(:types) LIMIT :limit",
       { query: query, types: types, limit: limit },
       function (error, result) {
-        if (error) {
+      console.log(result);
+      if (error) {
           larkin.error(req, res, next, error);
-        } else {
-          var parsed = _.groupBy(result, function (each) {
+        }
+        else {
+          var parsed = _.groupBy(result.rows, function (each) {
             return each.type;
           });
           var keys = Object.keys(parsed);
+          //TODO format the json output identical to prod
 
           for (var i = 0; i < keys.length; i++) {
             for (var j = 0; j < parsed[keys[i]].length; j++) {

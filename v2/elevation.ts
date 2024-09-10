@@ -6,30 +6,31 @@ module.exports = (req, res, next, cb) => {
   if (Object.keys(req.query).length < 1) {
     return larkin.info(req, res, next);
   }
+  let param = {}
+
   if ((req.query.lat && req.query.lng) || "sample" in req.query) {
     let lat = req.query.lat || 43.07;
     let lng = larkin.normalizeLng(req.query.lng) || -89.4;
-    let point = `POINT(${lng} ${lat})`;
-
-    larkin.queryPg(
-      "elevation",
-      `
-      WITH first AS (
-          SELECT ST_Value(rast, 1, ST_GeomFromText($1, 4326)) AS elevation, 1 as priority
+        param['point']= `POINT(${lng} ${lat})`;
+    let sql = `WITH first AS (
+          SELECT ST_Value(rast, 1, ST_GeomFromText(:point, 4326)) AS elevation, 1 as priority
           FROM sources.srtm1
-          WHERE ST_Intersects(ST_GeomFromText($1, 4326), rast)
+          WHERE ST_Intersects(ST_GeomFromText(:point, 4326), rast)
           UNION ALL
-          SELECT ST_Value(rast, 1, ST_GeomFromText($1, 4326)) AS elevation, 2 as priority
+          SELECT ST_Value(rast, 1, ST_GeomFromText(:point, 4326)) AS elevation, 2 as priority
           FROM sources.etopo1
-          WHERE ST_Intersects(ST_GeomFromText($1, 4326), rast)
+          WHERE ST_Intersects(ST_GeomFromText(:point, 4326), rast)
       )
       SELECT elevation
       FROM first
       WHERE elevation IS NOT NULL
       ORDER BY priority ASC
-      LIMIT 1
-    `,
-      [point],
+      LIMIT 1`;
+
+    larkin.queryPg(
+      "elevation",
+      sql,
+      param,
       (error, result) => {
         if (error) {
           if (cb) return cb(error);
@@ -77,26 +78,25 @@ module.exports = (req, res, next, cb) => {
       req.query.start_lng < req.query.end_lng
         ? req.query.end_lat
         : req.query.start_lat;
-    let linestring = `SRID=4326;LINESTRING(${leftLng} ${leftLat}, ${rightLng} ${rightLat})`;
-    let westPoint = `SRID=4326;POINT(${leftLng} ${leftLat})`;
+    let params = {}
 
-    larkin.queryPg(
-      "elevation",
-      `
-      WITH first AS (
+    params['linestring'] = `SRID=4326;LINESTRING(${leftLng} ${leftLat}, ${rightLng} ${rightLat})`;
+    params['westPoint'] = `SRID=4326;POINT(${leftLng} ${leftLat})`;
+
+    let sql = `WITH first AS (
         SELECT ST_SetSRID((ST_Dump(
         ST_LocateAlong(
           ST_AddMeasure(my_line, 0, 200), generate_series(0, 200)
         )
         )).geom, 4326) AS geom FROM (
-          SELECT ST_GeomFromText($1) AS my_line
+          SELECT ST_GeomFromText(:linestring) AS my_line
         ) q
       )
-
+      
       SELECT
         ST_X(geom) AS lng,
         ST_Y(geom) AS lat,
-        round((ST_DistanceSphere(geom, $2) * 0.001)::numeric, 2)::float AS d,
+        round((ST_DistanceSphere(geom, :westPoint) * 0.001)::numeric, 2)::float AS d,
         (
           SELECT elevation
           FROM (
@@ -112,9 +112,11 @@ module.exports = (req, res, next, cb) => {
           ORDER BY priority ASC
           LIMIT 1
         ) AS elevation
-      FROM first
-    `,
-      [linestring, westPoint],
+      FROM first`;
+    larkin.queryPg(
+      "elevation",
+      sql,
+      params,
       (error, result) => {
         if (error) {
           if (cb) return cb(error);

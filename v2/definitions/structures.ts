@@ -7,45 +7,49 @@ module.exports = function (req, res, next, cb) {
   }
 
   var where = [];
+  //changed back to dict
   var params = {};
   var limit = req.query.hasOwnProperty("sample") ? "LIMIT 5" : "";
 
+  //updated sql variables to named parameters using yesql
   if (req.query.structure_class) {
-    where.push("structure_class IN (:structure_class)");
-    params["structure_class"] = larkin.parseMultipleStrings(
-      req.query.structure_class,
-    );
-  } else if (req.query.structure_type) {
-    where.push("structure_type IN (:structure_type)");
-    params["structure_type"] = larkin.parseMultipleStrings(
-      req.query.structure_type,
-    );
-  } else if (req.query.structure) {
-    where.push("structure IN (:structure)");
+    where.push(`structure_class = ANY(:structure_class)`);
+    params["structure_class"] = larkin.parseMultipleStrings(req.query.structure_class);
+  }
+  else if (req.query.structure_type) {
+    where.push(`structure_type = ANY(:structure_type)`);
+    params["structure_type"] = larkin.parseMultipleStrings(req.query.structure_type);
+  }
+  else if (req.query.structure) {
+    where.push(`structure = ANY(:structure)`);
     params["structure"] = larkin.parseMultipleStrings(req.query.structure);
-  } else if (req.query.structure_id) {
-    where.push("structures.id IN (:structure_id)");
+  }
+  else if (req.query.structure_id) {
+    where.push(`structures.id = ANY(:structure_id)`);
     params["structure_id"] = larkin.parseMultipleIds(req.query.structure_id);
-  } else if (req.query.structure_like) {
-    where.push("structure LIKE :structure");
-    params["structure"] = "%" + req.query.structure_like + "%";
+  }
+  else if (req.query.structure_like) {
+    where.push(`structure LIKE :structure_like`);
+    params["structure_like"] = `%${req.query.structure_like}%`;
   }
 
   where = where.length ? "WHERE " + where.join(" AND ") : "";
 
-  larkin.query(
-    `
+  var sql =`
     SELECT
       structures.id AS structure_id,
       structure AS name,
       structure_type AS structure_type,
-      COALESCE(structure_group, '') AS 'group',
+      COALESCE(structure_group::text, '') AS "group",
       structure_class AS class
-    FROM structures
+    FROM macrostrat.structures
     ${where}
     GROUP BY structures.id
     ${limit}
-  `,
+  `
+
+  larkin.queryPg("burwell",
+    sql,
     params,
     function (error, data) {
       if (error) {
@@ -57,7 +61,7 @@ module.exports = function (req, res, next, cb) {
       }
 
       if (cb) {
-        cb(null, data);
+        cb(null, data.rows);
       } else {
         larkin.sendData(
           req,
@@ -71,7 +75,7 @@ module.exports = function (req, res, next, cb) {
             compact: true,
           },
           {
-            data: data,
+            data: data.rows,
           },
         );
       }

@@ -1,4 +1,4 @@
-var mysql = require("mysql"),
+var //mysql = require("mysql"),
   async = require("async"),
   _ = require("underscore"),
   credentials = require("./credentials"),
@@ -14,7 +14,7 @@ const { Client, Pool } = require("pg");
 (function () {
   var larkin = {};
 
-  larkin.connectMySQL = function () {
+  /* larkin.connectMySQL = function () {
     // Non-blocking FTW
     this.pool = mysql.createPool(credentials.mysql);
 
@@ -26,9 +26,10 @@ const { Client, Pool } = require("pg");
         );
       }
     });
-  };
+  };*/
 
-  larkin.queryPg = function (db, sql, params, callback) {
+
+  /*larkin.queryPg = function (db, sql, params, callback) {
     const nameMapping = credentials.postgresDatabases ?? {};
     const dbName = nameMapping[db] ?? db;
 
@@ -41,10 +42,9 @@ const { Client, Pool } = require("pg");
     }
 
     if (dbName == "elevation") {
-      /** Special case for elevation database (temporary) */
+      //Special case for elevation database (temporary)
       connectionString = credentials.elevationDatabase;
     }
-
     const pool = new Pool({
       connectionString,
       ...otherConnectionDetails,
@@ -67,6 +67,65 @@ const { Client, Pool } = require("pg");
       }
     });
   };
+*/
+
+  //added new method to query from Maria data in the new PG database after migration
+  larkin.queryPg = function (db, sql, params, callback) {
+    //add console.logs for debug mode in the future
+    const nameMapping = credentials.postgresDatabases ?? {};
+    const dbName = nameMapping[db] ?? db;
+
+    if (dbName == "geomacro") {
+      console.warn(
+        "In Macrostrat v2, 'geomacro' is merged with 'burwell' into the 'macrostrat' database.",
+      );
+    }
+    let connectionDetails = {...credentials.pg};
+
+    if (dbName == "elevation") {
+      /* Special case for elevation database (temporary) */
+      connectionDetails.database = 'elevation'
+    }
+
+    const pool = new Pool(connectionDetails);
+    console.log(connectionDetails)
+
+    pool.connect(function (err, client, done) {
+      if (err) {
+        larkin.log("error", "error connecting - " + err);
+        callback(err);
+      } else if (Array.isArray(params)) {
+        console.log("Params is array: \n", sql)
+        console.log(params)
+        client.query(sql, params, function (err, result) {
+          done();
+          if (err) {
+            larkin.log("error", err);
+            callback(err);
+          } else {
+            callback(null, result);
+          }
+        });
+      } else if (typeof(params) === 'object') {
+        console.log("Params is object, using yesql: \n", sql)
+        console.log(params)
+        //named uses yesql to modify the params dict and sql named parameters into an array before querying PG.
+        //client.query can only accept numerical indices in sql syntax and an array for parameter values.
+        const preparedQuery = named(sql)(params);
+        client.query(preparedQuery.text, preparedQuery.values, function (err, result) {
+          done();
+          if (err) {
+            larkin.log("error", err);
+            callback(err);
+          } else {
+            callback(null, result);
+          }
+        });
+      }
+    });
+  };
+
+
 
   larkin.toUnnamed = function (sql, params) {
     var placeholders = sql.match(
@@ -85,6 +144,7 @@ const { Client, Pool } = require("pg");
     return [sql, newParams];
   };
 
+  /*
   larkin.query = function (sql, params, callback) {
     //console.warn(`Deprecated MySQL query:\n${sql}`);
     if (sql.indexOf(":") > -1 && Object.keys(params).length > 0) {
@@ -112,10 +172,9 @@ const { Client, Pool } = require("pg");
             }
           }.bind(this),
         );
-        //console.log(query.sql)
       }.bind(this),
     );
-  };
+  }; */
 
   larkin.sendImage = function (req, res, next, data, isCached) {
     //  console.log(data)
@@ -499,7 +558,7 @@ const { Client, Pool } = require("pg");
       });
     }
 
-    // Get unique ref_ids
+
     var ref_ids = _.uniq(
       _.flatten(
         data.map(function (d) {
@@ -508,23 +567,26 @@ const { Client, Pool } = require("pg");
       ),
     );
 
+
+
+
     // Macrostrat refs
     if (key === "refs" || key === "ref_id") {
-      larkin.query(
-        "SELECT refs.id AS ref_id, pub_year, author, ref, doi, url, COUNT(DISTINCT units_sections.unit_id) AS t_units FROM refs LEFT JOIN col_refs ON col_refs.ref_id = refs.id LEFT JOIN units_sections ON units_sections.col_id = col_refs.col_id WHERE refs.id IN (:ref_id) GROUP BY refs.id",
+      larkin.queryPg("burwell",
+        "SELECT refs.id AS ref_id, pub_year, author, ref, doi, url, COUNT(DISTINCT units_sections.unit_id) AS t_units FROM macrostrat.refs LEFT JOIN macrostrat.col_refs ON col_refs.ref_id = refs.id LEFT JOIN macrostrat.units_sections ON units_sections.col_id = col_refs.col_id WHERE refs.id = ANY(:ref_id) GROUP BY refs.id",
         { ref_id: ref_ids },
         function (error, data) {
           var refs = {};
-          if (!data) {
+          if (!data.rows) {
             return callback(null);
           }
-          for (var i = 0; i < data.length; i++) {
-            refs[data[i]["ref_id"]] =
-              larkin.normalizeRefField(data[i].author) +
-              larkin.normalizeRefField(data[i].ref) +
-              larkin.normalizeRefField(data[i].pub_year) +
-              larkin.normalizeRefField(data[i].doi) +
-              larkin.normalizeRefField(data[i].url);
+          for (var i = 0; i < data.rows.length; i++) {
+            refs[data.rows[i]["ref_id"]] =
+              larkin.normalizeRefField(data.rows[i].author) +
+              larkin.normalizeRefField(data.rows[i].ref) +
+              larkin.normalizeRefField(data.rows[i].pub_year) +
+              larkin.normalizeRefField(data.rows[i].doi) +
+              larkin.normalizeRefField(data.rows[i].url);
           }
           callback(refs);
         },
@@ -587,19 +649,30 @@ const { Client, Pool } = require("pg");
     async.parallel(
       {
         unitSummary: function (callback) {
-          // get all units and summarize for columns
+          //get all units and summarize for columns
           http.get(
-            "http://localhost:5550/v2/units?all&response=long",
+              //TODO: change url to match env.
+            "http://localhost:5000/v2/units?all&response=long",
             function (res) {
               var body = "";
-
               res.on("data", function (chunk) {
                 body += chunk;
               });
-
               res.on("end", function () {
-                var result = JSON.parse(body).success.data;
+              try {
+                var parsedBody = JSON.parse(body);
+                // Process the JSON as needed
+              } catch (e) {
+                console.error('Failed to parse JSON:', e);
+                console.error('Response body:', body); // Log the actual body for debugging
+              }
 
+
+              if (parsedBody && parsedBody.success && parsedBody.success.data) {
+                var result = parsedBody.success.data;
+              } else {
+                console.error('Invalid response body:', body);
+                }
                 var cols = _.groupBy(result, function (d) {
                   return d.col_id;
                 });
@@ -692,8 +765,8 @@ const { Client, Pool } = require("pg");
           col_group,
           col_groups.id AS col_group_id,
           col AS group_col_id,
-          round(cols.col_area, 1) AS col_area,
-          project_id,
+          round(cols.col_area::numeric, 1) AS col_area,
+          cols.project_id,
           string_agg(col_refs.ref_id::varchar, '|') AS refs,
           ST_AsGeoJSON(col_areas.col_area) geojson
         FROM macrostrat.cols
@@ -728,8 +801,8 @@ const { Client, Pool } = require("pg");
           col_group,
           col_groups.id AS col_group_id,
           col AS group_col_id,
-          round(cols.col_area, 1) AS col_area,
-          project_id,
+          round(cols.col_area::numeric, 1) AS col_area,
+          cols.project_id,
           string_agg(col_refs.ref_id::varchar, '|') AS refs
         FROM macrostrat.cols
         LEFT JOIN macrostrat.col_areas on col_areas.col_id = cols.id
