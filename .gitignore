@@ -15,6 +15,8 @@ v1/utilities/scripts/credentials.py
 .idea
 venv
 .env
+.github
+.git
 
 !v2/credentials.ts
 credentials.ts
