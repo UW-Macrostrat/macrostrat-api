@@ -106,3 +106,4 @@ api.use(function (err, req, res, next) {
 });
 
 module.exports = api;
+//export {api};

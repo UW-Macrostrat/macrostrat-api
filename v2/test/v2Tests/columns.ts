@@ -5,7 +5,7 @@ module.exports = function () {
 
   it("should return metadata", function (done) {
     request(settings.host)
-      .get("/api/v2/columns")
+      .get("/v2/columns")
       .expect(validators.aSuccessfulRequest)
       .expect(validators.json)
       .expect(validators.metadata)
@@ -17,7 +17,7 @@ module.exports = function () {
 
   it("should return a sample", function (done) {
     request(settings.host)
-      .get("/api/v2/columns?sample")
+      .get("/v2/columns?sample")
       .expect(validators.aSuccessfulRequest)
       .expect(validators.json)
       .expect(validators.aSample)
@@ -29,7 +29,7 @@ module.exports = function () {
 
   it("should accept an interval name", function (done) {
     request(settings.host)
-      .get("/api/v2/columns?interval_name=Permian")
+      .get("/v2/columns?interval_name=Permian")
       .expect(validators.aSuccessfulRequest)
       .expect(validators.json)
       .expect(validators.atLeastOneResult)
