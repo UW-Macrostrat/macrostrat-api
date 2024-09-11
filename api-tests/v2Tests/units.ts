@@ -26,6 +26,22 @@ request(settings.host)
   });
 });
 
+
+//randomize unit_id's for tests
+it("t_age, b_age, t_prop, b_prop, b_int_age, and t_int_age should have the correct format and data types", function (done) {
+  request(settings.host)
+      .get("/units?unit_id=352,283,382")
+      .expect(validators.aSuccessfulRequest)
+      .expect(validators.json)
+      .expect(validators.atLeastOneResult)
+      .expect(validators.correctDataTypes)
+      .end(function (error: any, res: any) {
+          if (error) return done(error);
+          done();
+      });
+});
+
+
 it("should accept an interval_name", function (done) {
 request(settings.host)
   .get("/units?interval_name=Permian")
@@ -462,18 +478,4 @@ request(settings.host)
     if (error) return done(error);
     done();
   });
-});
-
-//randomize unit_id's for tests
-it("all parameters should have the correct format and data types", function (done) {
-  request(settings.host)
-      .get("/units?unit_id=352,283,382")
-      .expect(validators.aSuccessfulRequest)
-      .expect(validators.json)
-      .expect(validators.atLeastOneResult)
-      .expect(validators.correctDataTypes)
-      .end(function (error: any, res: any) {
-          if (error) return done(error);
-          done();
-      });
 });

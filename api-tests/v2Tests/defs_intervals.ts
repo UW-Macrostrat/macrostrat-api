@@ -26,6 +26,21 @@ request(settings.host)
   });
 });
 
+
+//need to pass all other parameters through this test to ensure outputs are valid.
+it("t_age and b_age should have the correct format and data types", function (done) {
+request(settings.host)
+  .get("/defs/intervals?id=366")
+  .expect(validators.aSuccessfulRequest)
+  .expect(validators.json)
+  .expect(validators.atLeastOneResult)
+    .expect(validators.correctDataTypes)
+  .end(function (error: any, res: any) {
+    if (error) return done(error);
+    done();
+  });
+});
+
 it("/defs/intervals?timescale= should accept a timescale parameter", function (done) {
 request(settings.host)
   .get("/defs/intervals?timescale=new%20zealand%20ages")
@@ -99,17 +114,17 @@ request(settings.host)
   });
 });
 
-//need to pass all other parameters through this test to ensure outputs are valid.
-it("all parameters should have the correct format and data types", function (done) {
+
+it("should accept an interval_name", function (done) {
 request(settings.host)
-  .get("/defs/intervals?id=366")
+  .get("/intervals?name=Permian")
   .expect(validators.aSuccessfulRequest)
   .expect(validators.json)
   .expect(validators.atLeastOneResult)
-    .expect(validators.correctDataTypes)
   .end(function (error: any, res: any) {
     if (error) return done(error);
     done();
   });
 });
+
 
