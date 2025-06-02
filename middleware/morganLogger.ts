@@ -9,6 +9,23 @@ if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory);
 }
 
+// read log file
+function readLogFile() {
+    fs.readFile(path.join(logDirectory, 'access.log'), 'utf8', (err, data) => {
+    if (err) {
+        console.error('Error reading log file:', err);
+        return;
+    }
+    console.log('Log file contents:', data);
+    });
+}
+
+// Read the log file immediately when the server starts and every x seconds
+const seconds = 5
+readLogFile();
+setInterval(readLogFile, seconds * 1000);
+
+
 // Create a write stream for the log file
 const accessLogStream = fs.createWriteStream(path.join(logDirectory, 'access.log'), { flags: 'a' });
 
