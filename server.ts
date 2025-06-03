@@ -1,3 +1,5 @@
+import morganLogger from "./middleware/morganLogger";
+
 const dotenv = require("dotenv");
 // Load environment variables from .env file
 dotenv.config();
@@ -8,6 +10,7 @@ var express = require("express"),
   v2 = require("./v2"),
   defs = require("./v2/defs"),
   app = express();
+  app.use(morganLogger);
 
 var ua = require("universal-analytics");
 
