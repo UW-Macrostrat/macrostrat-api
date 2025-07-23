@@ -33,7 +33,9 @@ module.exports = function (req, res, next) {
             req.query.col_group_id ||
             req.query.strat_name_id ||
             req.query.strat_name_concept_id ||
-            "sample" in req.query
+            "sample" in req.query || 
+            req.query.lat ||
+            req.query.lng
           ) {
             callback(null, {
               interval_name: "Unknown",
@@ -112,6 +114,13 @@ module.exports = function (req, res, next) {
             params["concept_id"] = larkin.parseMultipleIds(
               req.query.strat_name_concept_id,
             );
+          }
+
+          if (req.query.lat && req.query.lng) {
+            where += " AND ST_DWithin(pbdb_matches.coordinate, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326), :radius)";
+            params["lat"] = parseFloat(req.query.lat);
+            params["lng"] = parseFloat(req.query.lng);
+            params["radius"] = parseFloat(req.query.radius) || .1;
           }
 
           if (req.query.col_group_id) {
