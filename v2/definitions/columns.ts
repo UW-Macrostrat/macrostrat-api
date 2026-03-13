@@ -34,6 +34,8 @@ module.exports = function (req, res, next, cb) {
   var where = [];
   var params = {};
   //add =ANY() syntax instead of in () syntax for PG
+  // Only filter by core projects if more specific criteria are not provided
+  let shouldFilterProjects = true;
   if (req.query.col_id) {
     where.push("cols.id = ANY(:col_id)");
     params["col_id"] = larkin.parseMultipleIds(req.query.col_id);
@@ -47,12 +49,14 @@ module.exports = function (req, res, next, cb) {
     params["col_name"] = larkin.parseMultipleStrings(req.query.col_name);
   }
 
-  const [whereClauses, projectParams] = buildProjectsFilter(
-    req,
-    "cols.project_id",
-  );
-  where = where.concat(whereClauses);
-  Object.assign(params, projectParams);
+  if (Object.keys(params).length == 0 || req.query.project_id) {
+    const [whereClauses, projectParams] = buildProjectsFilter(
+      req,
+      "cols.project_id",
+    );
+    where = where.concat(whereClauses);
+    Object.assign(params, projectParams);
+  }
 
   where.push("status_code = ANY(:status_code)");
   if (req.query.status_code || req.query.status) {

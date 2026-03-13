@@ -22,12 +22,15 @@ module.exports = function (req, res, next, cb) {
     params["col_group_id"] = larkin.parseMultipleIds(req.query.col_group_id);
   }
 
-  const [projectWhereClauses, projectParams] = buildProjectsFilter(
-    req,
-    "cols.project_id",
-  );
-  where = where.concat(projectWhereClauses);
-  Object.assign(params, projectParams);
+  if (Object.keys(params).length === 0 || req.query.project_id) {
+    // Only filter by project if no specific col_group_ids are provided
+    const [projectWhereClauses, projectParams] = buildProjectsFilter(
+      req,
+      "cols.project_id",
+    );
+    where = where.concat(projectWhereClauses);
+    Object.assign(params, projectParams);
+  }
 
   const whereClause = where.length ? "WHERE " + where.join(" AND ") : "";
 
