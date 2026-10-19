@@ -1,5 +1,15 @@
 # Macrostrat API
 
+> [!IMPORTANT]
+> **This repository has moved and is archived.** Macrostrat's v2 API now lives at
+> [`services/api-v2`](https://github.com/UW-Macrostrat/macrostrat/tree/main/services/api-v2)
+> in [UW-Macrostrat/macrostrat](https://github.com/UW-Macrostrat/macrostrat), with
+> this repository's full history. Release tags `vX.Y.Z` continue there as
+> `api-v2-vX.Y.Z`. Open issues were transferred and labelled
+> [`API v2`](https://github.com/UW-Macrostrat/macrostrat/labels/API%20v2); closed
+> issues and pull requests stay here as a record. Please open new issues and pull
+> requests in [UW-Macrostrat/macrostrat](https://github.com/UW-Macrostrat/macrostrat).
+
 The API for SCIENCE
 
 ## About

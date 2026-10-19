@@ -1,5 +1,9 @@
 # AGENTS.md
 
+**Archived.** This code now lives at `services/api-v2` in
+[UW-Macrostrat/macrostrat](https://github.com/UW-Macrostrat/macrostrat). Make
+changes there, not here.
+
 Conventions for `macrostrat-api`, Macrostrat's legacy v2 API: an Express app in
 TypeScript, run directly with `tsx` (no build step).
 
